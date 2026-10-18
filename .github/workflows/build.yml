@@ -21,6 +21,13 @@ jobs:
           which make arm-none-eabi-gcc || true
           ls "$DEVKITPRO/libctru/lib" | head -20
 
+      - name: Probe API
+        shell: bash
+        run: |
+          pacman -Q libctru citro3d 2>/dev/null | tr '\n' ';' | sed 's/^/::notice::vers: /'
+          grep -n "C3D_RenderTargetCreate(" "$DEVKITPRO/libctru/include/c3d/renderqueue.h" | head -2 | sed 's/^/::notice::rt: /'
+          grep -n "osGet3DSliderState" "$DEVKITPRO/libctru/include/3ds/os.h" | head -2 | sed 's/^/::notice::slider: /'
+
       - name: Build
         shell: bash
         run: |

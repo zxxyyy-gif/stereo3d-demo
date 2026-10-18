@@ -7,7 +7,7 @@
  *
  * 整个效果的核心只有两行：
  *   gfxSet3D(true);
- *   每层偏移 ox = eye * depth * STEREO_MAX_PX * gfxGet3DLevel();
+ *   每层偏移 ox = eye * depth * STEREO_MAX_PX * osGet3DSliderState();
  *
  * 编译：见 README.md（需要 devkitPro + 3ds-dev 包）
  */
@@ -191,13 +191,13 @@ int main(int argc, char** argv)
 
 	/* 手动建三个 target：上屏左右眼各一个，下屏一个。
 	 * 不用 C2D_Prepare()，因为它只会给上屏建一个默认 target。 */
-	topLeft = C3D_RenderTargetCreate(TOP_H, TOP_W, GPU_RB_DEPTH24_STENCIL8, GPU_RB_RGBA8);
+	topLeft = C3D_RenderTargetCreate(TOP_W, TOP_H, GPU_RB_RGBA8, GPU_RB_DEPTH24_STENCIL8);
 	C3D_RenderTargetSetOutput(topLeft, GFX_TOP, GFX_LEFT, DISPLAY_TRANSFER_FLAGS);
 
-	topRight = C3D_RenderTargetCreate(TOP_H, TOP_W, GPU_RB_DEPTH24_STENCIL8, GPU_RB_RGBA8);
+	topRight = C3D_RenderTargetCreate(TOP_W, TOP_H, GPU_RB_RGBA8, GPU_RB_DEPTH24_STENCIL8);
 	C3D_RenderTargetSetOutput(topRight, GFX_TOP, GFX_RIGHT, DISPLAY_TRANSFER_FLAGS);
 
-	bottom = C3D_RenderTargetCreate(BOT_H, BOT_W, GPU_RB_DEPTH24_STENCIL8, GPU_RB_RGBA8);
+	bottom = C3D_RenderTargetCreate(BOT_W, BOT_H, GPU_RB_RGBA8, GPU_RB_DEPTH24_STENCIL8);
 	C3D_RenderTargetSetOutput(bottom, GFX_BOTTOM, GFX_LEFT, DISPLAY_TRANSFER_FLAGS);
 
 	/* 打开立体模式：上屏进入视差屏障工作状态，右眼 buffer 才会被显示 */
@@ -237,7 +237,7 @@ int main(int argc, char** argv)
 		if (playerX > 3600.0f)  playerX = 3600.0f;
 		camX += (playerX - camX) * 0.10f;
 
-		float level = gfxGet3DLevel();
+		float level = osGet3DSliderState();
 		if (level < 0.0f) level = 0.0f;
 		if (level > 1.0f) level = 1.0f;
 
