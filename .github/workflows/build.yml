@@ -7,6 +7,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     container:
       image: devkitpro/devkitarm:latest
 
@@ -46,3 +48,15 @@ jobs:
           name: stereodemo-3dsx
           path: stereodemo.3dsx
           if-no-files-found: error
+
+      - name: Dump build log to ci-log branch
+        if: failure()
+        shell: bash
+        run: |
+          cd "$GITHUB_WORKSPACE"
+          git config user.name "ci-bot"
+          git config user.email "ci-bot@users.noreply.github.com"
+          git checkout -B ci-log
+          git add -f build.log
+          git commit -m "ci log ${GITHUB_SHA:0:7}" || true
+          git push -f origin ci-log
