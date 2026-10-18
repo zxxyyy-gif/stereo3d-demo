@@ -12,16 +12,26 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Show toolchain
         run: |
           echo "DEVKITPRO=$DEVKITPRO"
           echo "DEVKITARM=$DEVKITARM"
+          which make arm-none-eabi-gcc || true
           ls "$DEVKITPRO/libctru/lib" | head -20
 
       - name: Build
-        run: make -j"$(nproc)"
+        shell: bash
+        run: |
+          set -o pipefail
+          if ! make -j"$(nproc)" > build.log 2>&1; then
+            tail -8 build.log | while IFS= read -r l; do
+              echo "::error title=build::$l"
+            done
+            exit 1
+          fi
+          tail -5 build.log
 
       - name: Upload 3dsx
         uses: actions/upload-artifact@v4
