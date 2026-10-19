@@ -5,6 +5,8 @@
 
 > 说明：本工程是在**自己的程序里**实现立体分层，和修改商业游戏是两件不同的事（见文末）。
 
+> 编译状态：云端 CI（`devkitpro/devkitarm` 容器）已跑通，产出 `stereodemo.3dsx` 约 44KB。
+
 ## 需要什么
 
 devkitPro（含 devkitARM）+ 3ds-dev 包（提供 libctru / citro2d / citro3d）。

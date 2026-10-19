@@ -18,16 +18,7 @@ jobs:
         shell: bash
         run: |
           set -o pipefail
-          {
-            echo "== toolchain =="
-            echo "DEVKITPRO=$DEVKITPRO"
-            echo "DEVKITARM=$DEVKITARM"
-            (pacman -Q libctru citro3d 2>&1 || true)
-            (grep -n "C3D_RenderTargetCreate(" "$DEVKITPRO/libctru/include/c3d/renderqueue.h" 2>&1 | head -2 || true)
-            (grep -n "osGet3DSliderState" "$DEVKITPRO/libctru/include/3ds/os.h" 2>&1 | head -2 || true)
-            echo "== make =="
-          } > build.log
-          if ! make -j"$(nproc)" >> build.log 2>&1; then
+          if ! make -j"$(nproc)" > build.log 2>&1; then
             tail -8 build.log | while IFS= read -r l; do
               echo "::error title=build::$l"
             done
@@ -41,9 +32,3 @@ jobs:
           name: stereodemo-3dsx
           path: stereodemo.3dsx
           if-no-files-found: error
-
-      - name: Probe API
-        shell: bash
-        run: |
-          L=$(grep -m1 "C3D_RenderTargetCreate(" "$DEVKITPRO/libctru/include/c3d/renderqueue.h" 2>/dev/null || echo "not found")
-          echo "::notice title=prototype::$L"
