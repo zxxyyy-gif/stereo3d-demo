@@ -16,25 +16,20 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v5
 
-      - name: Show toolchain
-        run: |
-          echo "DEVKITPRO=$DEVKITPRO"
-          echo "DEVKITARM=$DEVKITARM"
-          which make arm-none-eabi-gcc || true
-          ls "$DEVKITPRO/libctru/lib" | head -20
-
-      - name: Probe API
-        shell: bash
-        run: |
-          pacman -Q libctru citro3d 2>/dev/null | tr '\n' ';' | sed 's/^/::notice::vers: /'
-          grep -n "C3D_RenderTargetCreate(" "$DEVKITPRO/libctru/include/c3d/renderqueue.h" | head -2 | sed 's/^/::notice::rt: /'
-          grep -n "osGet3DSliderState" "$DEVKITPRO/libctru/include/3ds/os.h" | head -2 | sed 's/^/::notice::slider: /'
-
       - name: Build
         shell: bash
         run: |
           set -o pipefail
-          if ! make -j"$(nproc)" > build.log 2>&1; then
+          {
+            echo "== toolchain =="
+            echo "DEVKITPRO=$DEVKITPRO"
+            echo "DEVKITARM=$DEVKITARM"
+            (pacman -Q libctru citro3d 2>&1 || true)
+            (grep -n "C3D_RenderTargetCreate(" "$DEVKITPRO/libctru/include/c3d/renderqueue.h" 2>&1 | head -2 || true)
+            (grep -n "osGet3DSliderState" "$DEVKITPRO/libctru/include/3ds/os.h" 2>&1 | head -2 || true)
+            echo "== make =="
+          } > build.log
+          if ! make -j"$(nproc)" >> build.log 2>&1; then
             tail -8 build.log | while IFS= read -r l; do
               echo "::error title=build::$l"
             done
@@ -49,14 +44,15 @@ jobs:
           path: stereodemo.3dsx
           if-no-files-found: error
 
-      - name: Dump build log to ci-log branch
-        if: failure()
+      - name: Publish build log
+        if: always()
         shell: bash
         run: |
           cd "$GITHUB_WORKSPACE"
+          [ -f build.log ] || echo "no build.log" > build.log
           git config user.name "ci-bot"
           git config user.email "ci-bot@users.noreply.github.com"
           git checkout -B ci-log
           git add -f build.log
           git commit -m "ci log ${GITHUB_SHA:0:7}" || true
-          git push -f origin ci-log
+          git push -f origin ci-log || true
