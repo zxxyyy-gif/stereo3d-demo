@@ -7,8 +7,6 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
     container:
       image: devkitpro/devkitarm:latest
 
@@ -44,15 +42,8 @@ jobs:
           path: stereodemo.3dsx
           if-no-files-found: error
 
-      - name: Publish build log
-        if: always()
+      - name: Probe API
         shell: bash
         run: |
-          cd "$GITHUB_WORKSPACE"
-          [ -f build.log ] || echo "no build.log" > build.log
-          git config user.name "ci-bot"
-          git config user.email "ci-bot@users.noreply.github.com"
-          git checkout -B ci-log
-          git add -f build.log
-          git commit -m "ci log ${GITHUB_SHA:0:7}" || true
-          git push -f origin ci-log || true
+          L=$(grep -m1 "C3D_RenderTargetCreate(" "$DEVKITPRO/libctru/include/c3d/renderqueue.h" 2>/dev/null || echo "not found")
+          echo "::notice title=prototype::$L"
