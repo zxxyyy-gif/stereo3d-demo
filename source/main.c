@@ -26,11 +26,6 @@
  * 觉得晕就调小到 8，觉得没感觉就调到 16。 */
 #define STEREO_MAX_PX 12.0f
 
-#define DISPLAY_TRANSFER_FLAGS \
-	(GX_TRANSFER_FLIP_VERT(0) | GX_TRANSFER_OUT_TILED(0) | GX_TRANSFER_RAW_COPY(0) | \
-	GX_TRANSFER_IN_FORMAT(GX_TRANSFER_FMT_RGBA8) | GX_TRANSFER_OUT_FORMAT(GX_TRANSFER_FMT_RGB8) | \
-	GX_TRANSFER_SCALING(GX_TRANSFER_SCALE_NO))
-
 /* 图层深度：0 = 贴在屏幕最深处（两眼完全重合），1 = 最靠前（视差最大） */
 #define D_SKY    0.00f
 #define D_CLOUD  0.10f
@@ -189,16 +184,15 @@ int main(int argc, char** argv)
 	C3D_Init(C3D_DEFAULT_CMDBUF_SIZE);
 	C2D_Init(C2D_DEFAULT_MAX_OBJECTS);
 
-	/* 手动建三个 target：上屏左右眼各一个，下屏一个。
-	 * 不用 C2D_Prepare()，因为它只会给上屏建一个默认 target。 */
-	topLeft = C3D_RenderTargetCreate(TOP_W, TOP_H, GPU_RB_RGBA8, GPU_RB_DEPTH24_STENCIL8);
-	C3D_RenderTargetSetOutput(topLeft, GFX_TOP, GFX_LEFT, DISPLAY_TRANSFER_FLAGS);
+	/* 必须调用：C2D_Prepare() 负责绑定着色器程序、属性布局和顶点缓冲。
+	 * 跳过它的话，清屏色会正常显示，但所有绘制调用都不会产生像素。 */
+	C2D_Prepare();
 
-	topRight = C3D_RenderTargetCreate(TOP_W, TOP_H, GPU_RB_RGBA8, GPU_RB_DEPTH24_STENCIL8);
-	C3D_RenderTargetSetOutput(topRight, GFX_TOP, GFX_RIGHT, DISPLAY_TRANSFER_FLAGS);
-
-	bottom = C3D_RenderTargetCreate(BOT_W, BOT_H, GPU_RB_RGBA8, GPU_RB_DEPTH24_STENCIL8);
-	C3D_RenderTargetSetOutput(bottom, GFX_BOTTOM, GFX_LEFT, DISPLAY_TRANSFER_FLAGS);
+	/* 上屏左右眼各一个 target，下屏一个。
+	 * C2D_CreateScreenTarget 内部已完成创建 + 设置输出（含正确的 transfer flags）。 */
+	topLeft  = C2D_CreateScreenTarget(GFX_TOP, GFX_LEFT);
+	topRight = C2D_CreateScreenTarget(GFX_TOP, GFX_RIGHT);
+	bottom   = C2D_CreateScreenTarget(GFX_BOTTOM, GFX_LEFT);
 
 	/* 打开立体模式：上屏进入视差屏障工作状态，右眼 buffer 才会被显示 */
 	gfxSet3D(true);
